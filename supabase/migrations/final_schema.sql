@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
+  role TEXT NOT NULL DEFAULT 'customer' CHECK (role IN ('customer', 'technician')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS replies (
   ticket_id uuid references tickets(id) on delete cascade,
   author_id uuid references profiles(id) on delete set null,
   message text not null,
+  category text not null default 'General',
   created_at timestamp with time zone default now()
 );
 

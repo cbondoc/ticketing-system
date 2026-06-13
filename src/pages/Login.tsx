@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
+  Chip,
   Container,
   TextField,
   Typography,
@@ -12,9 +13,8 @@ import {
   Tabs,
   InputAdornment,
   IconButton,
-
 } from '@mui/material';
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff, Person, Engineering } from "@mui/icons-material";
 import { supabase } from '../lib/supabase';
 
 interface TabPanelProps {
@@ -33,7 +33,32 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+const roleConfig = {
+  customer: {
+    label: "Customer",
+    icon: Person,
+    title: "Customer Portal",
+    subtitle: "Sign in to submit and track your support tickets",
+    color: "primary" as const,
+    switchLabel: "Technician? Sign in here",
+    switchPath: "/tech/login",
+    forgotPath: "/forgot-password",
+  },
+  technician: {
+    label: "Technician",
+    icon: Engineering,
+    title: "Technician Portal",
+    subtitle: "Sign in to manage and resolve assigned tickets",
+    color: "error" as const,
+    switchLabel: "Customer? Sign in here",
+    switchPath: "/login",
+    forgotPath: "/tech/forgot-password",
+  },
+};
+
 export default function Login({ role }: { role: "customer" | "technician" }) {
+  const config = roleConfig[role];
+  const RoleIcon = config.icon;
 
   const [tab, setTab] = useState(0);
   const [email, setEmail] = useState('');
@@ -109,7 +134,7 @@ export default function Login({ role }: { role: "customer" | "technician" }) {
       .from('profiles')
       .select('username')
       .eq('username', username.trim())
-      .single();
+      .maybeSingle();
 
     if (existingUser) {
       setError('Username is already taken');
@@ -182,10 +207,29 @@ export default function Login({ role }: { role: "customer" | "technician" }) {
           alignItems: 'center',
         }}
       >
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Ticket System
-          </Typography>
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            width: '100%',
+            borderTop: 4,
+            borderColor: `${config.color}.main`,
+          }}
+        >
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Chip
+              icon={<RoleIcon />}
+              label={config.label}
+              color={config.color}
+              sx={{ mb: 1.5, fontWeight: 600 }}
+            />
+            <Typography component="h1" variant="h4" gutterBottom>
+              {config.title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {config.subtitle}
+            </Typography>
+          </Box>
 
           <Tabs value={tab} onChange={(_, v) => setTab(v)} centered sx={{ mb: 2 }}>
             <Tab label="Login" />
@@ -244,70 +288,32 @@ export default function Login({ role }: { role: "customer" | "technician" }) {
                   ),
                 }}
               />
-              {location.pathname === "/login" ? (
-                <Button
-                  onClick={() => navigate("/forgot-password")}
-                  sx={{ mt: 1 }}
-                >
-                  Forgot Password?
-                </Button>
-              ) : location.pathname === "/tech/login" ? (
-                <Button
-                  onClick={() => navigate("/tech/forgot-password")}
-                  sx={{ mt: 1 }}
-                >
-                  Forgot Password?
-                </Button>
-              ) : null}
+              <Button
+                onClick={() => navigate(config.forgotPath)}
+                sx={{ mt: 1 }}
+              >
+                Forgot Password?
+              </Button>
 
+              <Button
+                type="submit"
+                color={config.color}
+                fullWidth
+                variant="contained"
+                sx={{ mt: 2, mb: 2 }}
+                disabled={loading}
+              >
+                {loading ? 'Signing in...' : `Sign In as ${config.label}`}
+              </Button>
 
-
-              {location.pathname === "/login" ? (
-                <>
-                  <Button
-                    type="submit"
-                    color='primary'
-                    fullWidth
-                    variant="contained"
-                    sx={{ mt: 2, mb: 3 }}
-                    disabled={loading}
-                  >
-                    {loading ? 'Signing in...' : 'Sign In'}
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    color='error'
-                    fullWidth
-                    onClick={() => navigate("/tech/login")}
-                  >
-                    Are you technician? Go here
-                  </Button>
-                </>
-
-              ) : location.pathname === "/tech/login" ? (
-                <>
-                  <Button
-                    type="submit"
-                    color='error'
-                    fullWidth
-                    variant="contained"
-                    sx={{ mt: 2, mb: 3 }}
-                    disabled={loading}
-                  >
-                    {loading ? 'Signing in...' : 'Sign In'}
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    onClick={() => navigate("/login")}
-                  >
-                    Are you customer? Go here
-                  </Button>
-                </>
-
-              ) : null}
+              <Button
+                variant="text"
+                fullWidth
+                color={role === "customer" ? "error" : "primary"}
+                onClick={() => navigate(config.switchPath)}
+              >
+                {config.switchLabel}
+              </Button>
 
             </Box>
           </TabPanel>
@@ -362,52 +368,25 @@ export default function Login({ role }: { role: "customer" | "technician" }) {
                 }}
               />
 
-              {location.pathname === "/login" ? (
-                <>
-                  <Button
-                    type="submit"
-                    fullWidth
-                    color="primary"
-                    variant="contained"
-                    sx={{ mt: 3, mb: 2 }}
-                    disabled={loading}
-                  >
-                    {loading ? 'Creating account...' : 'Sign Up'}
-                  </Button>
+              <Button
+                type="submit"
+                fullWidth
+                color={config.color}
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}
+                disabled={loading}
+              >
+                {loading ? 'Creating account...' : `Create ${config.label} Account`}
+              </Button>
 
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    color='error'
-                    onClick={() => navigate("/tech/login")}
-                  >
-                    Are you technician? Go here
-                  </Button>
-                </>
-
-              ) : location.pathname === "/tech/login" ? (
-                <>
-                  <Button
-                    type="submit"
-                    fullWidth
-                    color="error"
-                    variant="contained"
-                    sx={{ mt: 3, mb: 2 }}
-                    disabled={loading}
-                  >
-                    {loading ? 'Creating account...' : 'Sign Up'}
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    onClick={() => navigate("/login")}
-                  >
-                    Are you customer? Go here
-                  </Button>
-                </>
-
-              ) : null}
+              <Button
+                variant="text"
+                fullWidth
+                color={role === "customer" ? "error" : "primary"}
+                onClick={() => navigate(config.switchPath)}
+              >
+                {config.switchLabel}
+              </Button>
             </Box>
           </TabPanel>
         </Paper>
